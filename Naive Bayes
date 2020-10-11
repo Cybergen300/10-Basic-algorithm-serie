@@ -1,0 +1,40 @@
+#Import packages 
+from sklearn.naive_bayes import GaussianNB
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
+import numpy as np 
+import pandas as pd 
+import matplotlib.pyplot as plt 
+import seaborn as sns; sns.set() 
+
+#Import data 
+training = pd.read_csv('https://raw.githubusercontent.com/selva86/datasets/master/iris_train.csv')
+test = pd.read_csv('https://raw.githubusercontent.com/selva86/datasets/master/iris_test.csv')
+
+training.head()
+test.head()
+
+#Create the X, Y, Training and Test 
+x_train = training.drop('Species', axis = 1)
+y_train = training.loc[:, 'Species']
+x_test = test.drop('Species', axis =1)
+y_test = test.loc[:, 'Species']
+
+#Init the Gaussian Classifier 
+model = GaussianNB()
+
+#Train the model
+model.fit(x_train, y_train)
+
+#Predict output 
+pred = model.predict (x_test)
+
+r_sq = model.score(x_test,y_test)
+print('coefficient of determination:', r_sq)
+
+#Plot confusion Matrix
+mat = confusion_matrix(pred, y_test)
+names = np.unique(pred)
+sns.heatmap(mat, square = True, annot = True, fmt= 'd', cbar= False, xticklabels= names, yticklabels= names)
+plt.xlabel('Truth')
+plt.ylabel('Predicted')
