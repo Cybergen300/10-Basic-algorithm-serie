@@ -1,0 +1,61 @@
+#Packages Import
+import numpy as np 
+import matplotlib.pyplot as plt 
+import pandas as pd 
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.neighbors import KNeighborsRegressor
+
+#Loading data
+path = "https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data"
+headernames = ['sepal-length', 'sepal-width', 'petal-length', 'petal-width', 'Class']
+dataset = pd.read_csv(path, names = headernames)
+dataset.head()
+
+#===========
+#Classifier
+#===========
+
+#Create X and Y variables 
+X = dataset.iloc[:, :-1].values
+y = dataset.iloc[:, 4].values
+
+#Split dataset 
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.4)
+
+#Data scaling 
+scaler = StandardScaler() 
+scaler.fit(X_train)
+X_train = scaler.transform(X_train)
+X_test = scaler.transform(X_test)
+
+#Model creation 
+classifier = KNeighborsClassifier(n_neighbors=8)
+classifier.fit(X_train, y_train)
+
+#Prediction
+y_pred = classifier.predict(X_test)
+
+#results 
+result = confusion_matrix(y_test, y_pred)
+print("COnfusion Matrix :")
+print(result)
+result1 = classification_report(y_test, y_pred)
+print("Classification Report:", )
+print(result1)
+result2 = accuracy_score(y_test, y_pred)
+print("Accuracy:", result2)
+
+data = pd.read_csv(path, names = headernames)
+array = data.values
+X = array[:,:2]
+Y = array[:,2]
+data.shape
+data.head()
+
+knnr = KNeighborsRegressor(n_neighbors = 10)
+knnr.fit(X,Y)
+
+print ("The MSE is:",format(np.power(Y- knnr.predict(X),2).mean()))
