@@ -1,0 +1,108 @@
+#Example 1
+##############
+
+import matplotlib.pyplot as plt 
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix
+
+x = np.arange(10).reshape(-1,1)
+y = np.array([0,0,0,0,1,1,1,1,1,1])
+print(x)
+print(y)
+
+model = LogisticRegression(solver = 'liblinear', random_state = 0)
+model.fit(x,y)
+
+LogisticRegression(C=1.0, class_weight = None, dual = False, fit_intercept= True, intercept_scaling = 1, l1_ratio = None, max_iter=100, 
+                   multi_class = 'warn', n_jobs= None, penalty = 'l2', random_state=0, solver = 'liblinear', tol=0.0001, verbose=0, 
+                   warm_start = False)
+
+#equivalent of the two previous line
+model = LogisticRegression(solver='liblinear', random_state=0).fit(x,y)
+
+#model attributes 
+print(model.classes_)
+print(model.intercept_)
+print(model.coef_)
+
+#model evaluation
+model.predict_proba(x)
+
+#model predictions
+model.predict(x)
+
+print(model.score(x,y))
+
+#confusion matrix
+confusion_matrix(y, model.predict(x))
+
+#heatmap of the confusion matrix
+cm = confusion_matrix(y, model.predict(x))
+fig, ax = plt.subplots(figsize=(8,8))
+ax.imshow(cm)
+ax.grid(False)
+ax.xaxis.set(ticks=(0,1), ticklabels= ('Predicted 0s', 'Predicted 1s'))
+ax.yaxis.set(ticks=(0,1), ticklabels=('Actual 0s', 'Actual 1s'))
+ax.set_ylim(1.5, -0.5)
+for i in range(2):
+  for j in range(2):
+    ax.text(j,i,cm[i,j], ha = 'center', va= 'center', color = 'red')
+plt.show()
+
+print(classification_report(y, model.predict(x)))
+
+
+
+#Example 2
+#############
+
+#Handwriting recognition
+import matplotlib.pyplot as plt 
+import numpy as np 
+from sklearn.datasets import load_digits 
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+#Get Data
+x, y = load_digits(return_X_y = True)
+
+print(x)
+print(y)
+
+#Dataset split
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.2, random_state=0)
+
+#data scaling
+scaler = StandardScaler()
+x_train = scaler.fit_transform(x_train)
+
+model = LogisticRegression(solver= 'liblinear', C =0.05, multi_class='ovr', random_state=0)
+model.fit(x_train, y_train)
+
+x_test = scaler.transform(x_test)
+
+y_pred = model.predict(x_test)
+model.score(x_train, y_train)
+model.score(x_test, y_test)
+confusion_matrix(y_test, y_pred)
+
+#heatmap
+cm = confusion_matrix(y_test, y_pred)
+
+fig, ax = plt.subplots(figsize=(8,8))
+ax.imshow(cm)
+ax.grid(False)
+ax.set_xlabel('Predicted outputs', color = 'black')
+ax.set_ylabel('Actual outputs', color = 'black')
+ax.xaxis.set(ticks= range(10))
+ax.yaxis.set(ticks = range(10))
+ax.set_ylim(9.5, -0.5)
+for i in range(10):
+  for j in range(10):
+    ax.text(j,i, cm[i,j], ha= 'center', va = 'center', color='white')
+plt.show()
+
+print(classification_report(y_test, y_pred))
