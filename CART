@@ -1,0 +1,142 @@
+# Load Packages
+import pandas as pd 
+import os 
+import kaggle
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split 
+from sklearn import metrics 
+from sklearn.tree import export_graphviz
+from sklearn.externals.six import StringIO
+from IPython.display import Image
+import pydotplus
+
+#Loading data 
+os.environ['KAGGLE_USERNAME'] = "cr3000"
+os.environ['KAGGLE_KEY'] = "0013784ef7f6064f7b2efee176f95179"
+
+!kaggle datasets download -d uciml/pima-indians-diabetes-database
+
+
+#Data loading 
+col_names = [ 'pregnant', 'glucose', 'bp', 'skin', 'insulin', 'bmi', 'pedigree', 'age', 'label']
+train = pd.read_csv("pima-indians-diabetes-database.zip", header = None, names = col_names)
+train = train[1:]
+train.head()
+
+#split dataset in features and target variable 
+feature_cols = ['pregnant', 'insulin', 'bmi', 'age', 'glucose', 'bp', 'pedigree']
+X = train[feature_cols]
+y = train.label
+
+#Split dataset into training set and test set 
+X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.3, random_state=1)
+
+#Decision Tree Optimization
+
+#Create Decision Tree classifier object 
+clf = DecisionTreeClassifier(criterion = "gini", max_depth = 3)
+
+#Train Decision Tree Classifier 
+clf = clf.fit(X_train, y_train)
+
+#Predict the response for test dataset
+y_pred = clf.predict(X_test)
+
+#Model accuracy, how often is the classifier correct 
+print("Accuracy : ", metrics.accuracy_score(y_test, y_pred))
+
+#Model accuracy, how often is the classifier correct 
+dot_data = StringIO() 
+export_graphviz(clf, out_file= dot_data, 
+                filled = True, rounded = True, 
+                special_characters=True, feature_names = feature_cols, class_names=['0', '1'])
+graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+graph.write_png('diabetes.png')
+Image(graph.create_png())
+
+
+#====================
+#BONUS
+#====================
+
+
+n_nodes = clf.tree_.node_count 
+children_left = clf.tree_.children_left
+children_right = clf.tree_.children_right
+feature = clf.tree_.feature
+threshold = clf.tree_.threshold
+
+print(children_left)
+print(children_right)
+print(n_nodes)
+print(threshold)
+
+def find_path(node_numb, path, x): 
+  path.append(node_numb)
+  if node_numb == x: 
+    return True 
+  left = False 
+  right = False 
+  if (children_left[node_numb] != -1): 
+    left = find_path(children_left[node_numb], path, x)
+  if (children_right[node_numb] != -1 ): 
+    right = find_path(children_right[node_numb], path, x)
+  if left or right : 
+    return True
+  path.remove(node_numb)
+  return False
+
+def get_rule(path, column_names): 
+  mask = ''
+  for index, node in enumerate(path): 
+    #We check if we are not in the leaf 
+    if index !=len(path) -1: 
+      #Do we go under or over the threshold
+      if (children_left[node] == path[index+1]): 
+        mask += "(df[ '{}' ] <= {}) \t".format(column_names[feature[node]], threshold[node])
+      else:
+        mask += "(df[ '{}' ]> {}) \t".format(column_names[feature[node]], threshold[node])
+  #we insert the & at the right place
+  mask = mask.replace("\t", "&", mask.count("\t")-1)
+  mask = mask.replace("\t", "")
+  return mask
+
+import numpy as np 
+#Leaves 
+leave_id = clf.apply(X_test)
+
+paths = {}
+for leaf in np.unique(leave_id): 
+  path_leaf = []
+  find_path(0, path_leaf, leaf)
+  paths[leaf] = np.unique(np.sort(path_leaf))
+
+rules = {}
+for key in paths: 
+  rules[key] = get_rule(paths[key], train.columns)
+
+print(rules)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
